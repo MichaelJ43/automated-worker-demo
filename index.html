@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>TaskMaster 9000</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body bgcolor="#FF00FF" onload="initALL()">
+    <!-- TODO: fix this mess -->
+    <div id="mainthing">
+        <h1 style="font-family:Comic Sans MS;color:yellow">TASKMASTER 9000</h1>
+        <p id="sub">the ultimate todo app (beta)</p>
+    </div>
+
+    <table width="100%" border="1">
+        <tr><td>
+            <input type="text" id="txt" style="width:40px" placeholder="task">
+            <button onclick="addTask()">ADD</button>
+            <button onclick="addTask()">also add</button>
+        </td></tr>
+        <tr><td>
+            <label>User PIN (saved on device): <input type="text" id="pin" onchange="savePin()"></label>
+        </td></tr>
+    </table>
+
+    <div id="list"></div>
+
+    <div id="stats">tasks: 0</div>
+
+    <button id="clr" style="position:fixed;bottom:3px;right:3px;font-size:8px;padding:1px">clear ALL data no confirm</button>
+
+    <script>
+        // duplicate handler bad
+        document.getElementById('clr').onclick = function(){ doClear(); };
+    </script>
+    <script src="app.js"></script>
+</body>
+</html>

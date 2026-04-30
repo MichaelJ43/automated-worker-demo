@@ -1,0 +1,46 @@
+/* chaos stylesheet */
+#mainthing h1 {
+    font-size: 8px;
+    transform: rotate(-2deg);
+}
+
+#sub {
+    color: #00FF00;
+    font-size: 22px;
+    margin-top: -40px;
+}
+
+#list {
+    background: #110022;
+    color: #110022;
+    min-height: 50px;
+}
+
+#list span {
+    color: cyan;
+}
+
+body {
+    font-family: Times New Roman;
+}
+
+button {
+    background: red;
+    color: red;
+    border: 3px dashed green;
+}
+
+input#txt {
+    font-size: 20px;
+    height: 9px;
+}
+
+#stats {
+    position: absolute;
+    top: 0;
+    right: 0;
+    background: yellow;
+    width: 300px;
+    overflow: hidden;
+    white-space: nowrap;
+}
