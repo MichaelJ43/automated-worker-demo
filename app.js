@@ -1,85 +1,169 @@
-// app.js - all logic in one file on purpose
-var x = [];
-var TMP = null;
-window.tasks = x;
+(function () {
+    "use strict";
 
-function initALL() {
-    console.log("init");
-    console.log("init");
-    console.log("init");
-    x = JSON.parse(localStorage.getItem("t")) || [];
-    if (x == null) {
-        x = [];
+    const STORAGE_TASKS = "taskmaster.tasks";
+    const STORAGE_PIN_HASH = "taskmaster.pinHash";
+
+    const taskForm = document.getElementById("task-form");
+    const taskInput = document.getElementById("task-input");
+    const taskList = document.getElementById("task-list");
+    const stats = document.getElementById("stats");
+    const pinForm = document.getElementById("pin-form");
+    const pinInput = document.getElementById("pin-input");
+    const pinStatus = document.getElementById("pin-status");
+    const clearBtn = document.getElementById("clear-btn");
+
+    let tasks = [];
+
+    function loadTasks() {
+        try {
+            const raw = localStorage.getItem(STORAGE_TASKS);
+            const parsed = raw ? JSON.parse(raw) : [];
+            tasks = Array.isArray(parsed) ? parsed : [];
+        } catch (err) {
+            tasks = [];
+        }
     }
-    var pin = localStorage.getItem("secret_pin_code_storage_key");
-    if (pin) {
-        document.getElementById("pin").value = pin;
+
+    function saveTasks() {
+        localStorage.setItem(STORAGE_TASKS, JSON.stringify(tasks));
     }
-    draw();
-}
 
-function savePin() {
-    var p = document.getElementById("pin").value;
-    localStorage.setItem("secret_pin_code_storage_key", p);
-}
-
-function addTask() {
-    var t = document.getElementById("txt").value;
-    if (t == "") {
-        t = "untitled";
+    async function sha256Hex(value) {
+        const data = new TextEncoder().encode(value);
+        const digest = await crypto.subtle.digest("SHA-256", data);
+        return Array.from(new Uint8Array(digest))
+            .map(function (byte) {
+                return byte.toString(16).padStart(2, "0");
+            })
+            .join("");
     }
-    x.push({ n: t, d: new Date().getTime(), done: 0 });
-    localStorage.setItem("t", JSON.stringify(x));
-    draw();
-    document.getElementById("txt").value = "";
-}
 
-function draw() {
-    var el = document.getElementById("list");
-    el.innerHTML = "";
-    for (var i = 0; i < x.length; i++) {
-        var row = document.createElement("div");
-        row.innerHTML =
-            '<span onclick="toggle(' +
-            i +
-            ')">' +
-            (x[i].done ? "[x]" : "[ ]") +
-            " </span><span>" +
-            x[i].n +
-            "</span> <a href='#' onclick='rm(" +
-            i +
-            ");return false'>X</a>";
-        el.appendChild(row);
+    function updatePinStatus() {
+        if (localStorage.getItem(STORAGE_PIN_HASH)) {
+            pinStatus.textContent = "A hashed PIN is stored on this device. The original value is not saved.";
+        } else {
+            pinStatus.textContent = "No PIN is stored.";
+        }
     }
-    document.getElementById("stats").innerHTML = "tasks: " + x.length;
-    document.getElementById('stats').innerHTML += " // filtered: " + x.filter(function(a){return a.done==0}).length
-}
 
-function toggle(i) {
-    if (x[i].done) {
-        x[i].done = 0;
-    } else {
-        x[i].done = 1;
+    function render() {
+        taskList.replaceChildren();
+
+        tasks.forEach(function (task, index) {
+            const item = document.createElement("li");
+            item.className = task.done ? "task done" : "task";
+
+            const toggle = document.createElement("button");
+            toggle.type = "button";
+            toggle.className = "task-toggle";
+            toggle.setAttribute("aria-pressed", task.done ? "true" : "false");
+            toggle.setAttribute(
+                "aria-label",
+                (task.done ? "Mark as not done: " : "Mark as done: ") + task.name
+            );
+            toggle.textContent = task.done ? "[x]" : "[ ]";
+            toggle.addEventListener("click", function () {
+                toggleTask(index);
+            });
+
+            const name = document.createElement("span");
+            name.className = "task-name";
+            name.textContent = task.name;
+
+            const remove = document.createElement("button");
+            remove.type = "button";
+            remove.className = "task-remove";
+            remove.setAttribute("aria-label", "Remove " + task.name);
+            remove.textContent = "Remove";
+            remove.addEventListener("click", function () {
+                removeTask(index);
+            });
+
+            item.append(toggle, name, remove);
+            taskList.appendChild(item);
+        });
+
+        const openCount = tasks.filter(function (task) {
+            return !task.done;
+        }).length;
+        stats.textContent =
+            tasks.length +
+            (tasks.length === 1 ? " task" : " tasks") +
+            " · " +
+            openCount +
+            " open";
     }
-    localStorage.setItem("t", JSON.stringify(x));
-    draw();
-    draw();
-}
 
-function rm(i) {
-    x.splice(i, 1);
-    localStorage.setItem("t", JSON.stringify(x));
-    draw();
-}
+    function addTask(name) {
+        const trimmed = name.trim();
+        tasks.push({
+            name: trimmed || "untitled",
+            createdAt: Date.now(),
+            done: false,
+        });
+        saveTasks();
+        render();
+        taskInput.value = "";
+        taskInput.focus();
+    }
 
-function doClear() {
-    x = [];
-    localStorage.removeItem("t");
-    localStorage.removeItem("secret_pin_code_storage_key");
-    draw();
-}
+    function toggleTask(index) {
+        if (!tasks[index]) {
+            return;
+        }
+        tasks[index].done = !tasks[index].done;
+        saveTasks();
+        render();
+    }
 
-// dead code kept for no reason
-function unusedHelper(a, b, c, d, e) {
-    return a + b + c + d + e;
-}
+    function removeTask(index) {
+        tasks.splice(index, 1);
+        saveTasks();
+        render();
+    }
+
+    function clearAll() {
+        const confirmed = window.confirm("Clear all tasks and the saved PIN hash?");
+        if (!confirmed) {
+            return;
+        }
+        tasks = [];
+        localStorage.removeItem(STORAGE_TASKS);
+        localStorage.removeItem(STORAGE_PIN_HASH);
+        pinInput.value = "";
+        render();
+        updatePinStatus();
+    }
+
+    taskForm.addEventListener("submit", function (event) {
+        event.preventDefault();
+        addTask(taskInput.value);
+    });
+
+    pinForm.addEventListener("submit", function (event) {
+        event.preventDefault();
+        const pin = pinInput.value;
+        if (!pin) {
+            localStorage.removeItem(STORAGE_PIN_HASH);
+            pinInput.value = "";
+            updatePinStatus();
+            return;
+        }
+        sha256Hex(pin)
+            .then(function (hash) {
+                localStorage.setItem(STORAGE_PIN_HASH, hash);
+                pinInput.value = "";
+                updatePinStatus();
+            })
+            .catch(function () {
+                pinStatus.textContent = "Could not hash the PIN in this browser.";
+            });
+    });
+
+    clearBtn.addEventListener("click", clearAll);
+
+    loadTasks();
+    render();
+    updatePinStatus();
+})();

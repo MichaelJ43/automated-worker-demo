@@ -1,37 +1,46 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TaskMaster 9000</title>
     <link rel="stylesheet" href="styles.css">
 </head>
-<body bgcolor="#FF00FF" onload="initALL()">
-    <!-- TODO: fix this mess -->
-    <div id="mainthing">
-        <h1 style="font-family:Comic Sans MS;color:yellow">TASKMASTER 9000</h1>
-        <p id="sub">the ultimate todo app (beta)</p>
-    </div>
+<body>
+    <header class="hero">
+        <h1>TaskMaster 9000</h1>
+        <p id="subtitle">A local demo todo app</p>
+    </header>
 
-    <table width="100%" border="1">
-        <tr><td>
-            <input type="text" id="txt" style="width:40px" placeholder="task">
-            <button onclick="addTask()">ADD</button>
-            <button onclick="addTask()">also add</button>
-        </td></tr>
-        <tr><td>
-            <label>User PIN (saved on device): <input type="text" id="pin" onchange="savePin()"></label>
-        </td></tr>
-    </table>
+    <main class="layout">
+        <form id="task-form" class="panel">
+            <label for="task-input">New task</label>
+            <div class="row">
+                <input type="text" id="task-input" name="task" autocomplete="off" placeholder="What needs doing?">
+                <button type="submit" id="add-btn">Add</button>
+            </div>
+        </form>
 
-    <div id="list"></div>
+        <form id="pin-form" class="panel">
+            <label for="pin-input">Device PIN (hashed before it is saved)</label>
+            <div class="row">
+                <input type="password" id="pin-input" name="pin" autocomplete="new-password">
+                <button type="submit" id="pin-btn">Save PIN</button>
+            </div>
+            <p id="pin-status" class="status" role="status"></p>
+        </form>
 
-    <div id="stats">tasks: 0</div>
+        <section class="panel" aria-labelledby="task-list-heading">
+            <div class="list-header">
+                <h2 id="task-list-heading">Tasks</h2>
+                <p id="stats" aria-live="polite">0 tasks</p>
+            </div>
+            <ul id="task-list"></ul>
+        </section>
+    </main>
 
-    <button id="clr" style="position:fixed;bottom:3px;right:3px;font-size:8px;padding:1px">clear ALL data no confirm</button>
+    <button type="button" id="clear-btn">Clear all data</button>
 
-    <script>
-        // duplicate handler bad
-        document.getElementById('clr').onclick = function(){ doClear(); };
-    </script>
     <script src="app.js"></script>
 </body>
 </html>
